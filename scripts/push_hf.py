@@ -71,8 +71,10 @@ def main() -> None:
         repo_id=args.repo_id,
         repo_type="model",
     )
+    model_card = Path("model_card.md")
+    card_path = model_card if model_card.exists() else Path("README.md")
     api.upload_file(
-        path_or_fileobj="README.md",
+        path_or_fileobj=str(card_path),
         path_in_repo="README.md",
         repo_id=args.repo_id,
         repo_type="model",
