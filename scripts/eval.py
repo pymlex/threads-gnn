@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from data.dataset import RedditThreadsDataset, collate_graphs
+from data.dataset import RedditThreadsDataset, ShardStore, collate_graphs
 from features.engineering import feature_dim
 from models import build_model
 from training.metrics import (
@@ -35,7 +35,10 @@ def evaluate_checkpoint(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     config.model.architecture = architecture
 
-    dataset = RedditThreadsDataset(config.data.processed_dir, split)
+    processed_dir = Path(config.data.processed_dir)
+    splits_path = processed_dir / "splits.json"
+    shard_store = ShardStore(processed_dir)
+    dataset = RedditThreadsDataset(shard_store, split, splits_path)
     loader = DataLoader(
         dataset,
         batch_size=config.training.batch_size,
@@ -45,7 +48,7 @@ def evaluate_checkpoint(
     )
 
     train_loader = DataLoader(
-        RedditThreadsDataset(config.data.processed_dir, "train"),
+        RedditThreadsDataset(shard_store, "train", splits_path),
         batch_size=config.training.batch_size,
         shuffle=False,
         num_workers=config.training.num_workers,

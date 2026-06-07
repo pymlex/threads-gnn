@@ -52,7 +52,7 @@ cd threads-gnn
 
 ### Install
 
-Creates `.env` from `.env.example`, installs PyG wheels matched to the Colab PyTorch build, then opens GitHub browser authentication.
+Creates `.env` from `.env.example`, reinstalls PyG wheels matched to the Colab PyTorch build, and verifies `torch-scatter`. GitHub authentication runs only when `gh` is not already logged in.
 
 ```bash
 bash scripts/install.sh

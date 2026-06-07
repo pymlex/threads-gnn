@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from data.dataset import RedditThreadsDataset, collate_graphs
+from data.dataset import RedditThreadsDataset, ShardStore, collate_graphs
 from features.engineering import feature_dim
 from models import build_model
 from schemas import ExperimentConfig
@@ -21,6 +21,7 @@ from training.metrics import (
     softmax_probabilities,
 )
 from utils.config import save_config
+from utils.pyg_check import require_torch_scatter
 from utils.seed import set_seed
 
 
@@ -29,6 +30,7 @@ class GraphTrainer:
 
     def __init__(self, config: ExperimentConfig) -> None:
         self.config = config
+        require_torch_scatter()
         set_seed(config.seed)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.processed_dir = Path(config.data.processed_dir)
@@ -71,9 +73,11 @@ class GraphTrainer:
             "collate_fn": collate_graphs,
             "pin_memory": self.device.type == "cuda",
         }
-        train_dataset = RedditThreadsDataset(self.processed_dir, "train")
-        val_dataset = RedditThreadsDataset(self.processed_dir, "val")
-        test_dataset = RedditThreadsDataset(self.processed_dir, "test")
+        splits_path = self.processed_dir / "splits.json"
+        shard_store = ShardStore(self.processed_dir)
+        train_dataset = RedditThreadsDataset(shard_store, "train", splits_path)
+        val_dataset = RedditThreadsDataset(shard_store, "val", splits_path)
+        test_dataset = RedditThreadsDataset(shard_store, "test", splits_path)
         train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
         val_loader = DataLoader(val_dataset, shuffle=False, **loader_kwargs)
         test_loader = DataLoader(test_dataset, shuffle=False, **loader_kwargs)

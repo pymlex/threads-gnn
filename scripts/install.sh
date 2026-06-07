@@ -4,11 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-TORCH_TAG=$(python -c "import torch; v=torch.__version__.split('+')[0]; c=torch.version.cuda; print('torch-'+v+'+cu'+c.replace('.','') if c else 'torch-'+v+'+cpu')")
-PYG_INDEX="https://data.pyg.org/whl/${TORCH_TAG}.html"
-
 pip install -q torch-geometric
-pip install -q pyg-lib torch-scatter torch-sparse -f "${PYG_INDEX}"
+python scripts/install_pyg.py
 pip install -q -e .
 
 if [ ! -f .env ]; then
@@ -20,4 +17,8 @@ if ! command -v gh >/dev/null 2>&1; then
   apt-get install -y -qq gh
 fi
 
-gh auth login --web --git-protocol https
+if ! gh auth status >/dev/null 2>&1; then
+  gh auth login --web --git-protocol https
+fi
+
+python -c "from utils.pyg_check import require_torch_scatter; require_torch_scatter(); print('torch-scatter OK')"
