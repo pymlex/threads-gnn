@@ -54,9 +54,8 @@ class GraphTrainer:
             weight_decay=config.training.weight_decay,
         )
         self.scheduler = self._build_scheduler()
-        self.scaler = torch.cuda.amp.GradScaler(
-            enabled=config.training.use_amp and self.device.type == "cuda"
-        )
+        self.use_amp = config.training.use_amp and self.device.type == "cuda"
+        self.scaler = torch.amp.GradScaler("cuda", enabled=self.use_amp)
         self.best_val_mcc = -np.inf
         self.patience_counter = 0
         self.epoch_metrics_path = self.run_dir / "epoch_metrics.csv"
@@ -96,9 +95,7 @@ class GraphTrainer:
 
     def _forward_batch(self, batch) -> torch.Tensor:
         batch = batch.to(self.device)
-        with torch.cuda.amp.autocast(
-            enabled=self.config.training.use_amp and self.device.type == "cuda"
-        ):
+        with torch.amp.autocast("cuda", enabled=self.use_amp):
             return self.model(batch)
 
     def _evaluate_loader(self, loader: DataLoader, desc: str) -> dict[str, object]:
@@ -154,9 +151,7 @@ class GraphTrainer:
             batch = batch.to(self.device)
             labels = batch.y.view(-1)
 
-            with torch.cuda.amp.autocast(
-                enabled=self.config.training.use_amp and self.device.type == "cuda"
-            ):
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
                 logits = self.model(batch)
                 loss = F.cross_entropy(logits, labels)
 

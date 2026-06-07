@@ -5,12 +5,13 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
+from tqdm.auto import tqdm
 
 from data.splits import load_splits
 
 
 class RedditThreadsDataset(Dataset):
-    """Lazy sharded dataset for Reddit Threads graphs."""
+    """Dataset for Reddit Threads graphs with split-level shard preloading."""
 
     def __init__(
         self,
@@ -28,27 +29,32 @@ class RedditThreadsDataset(Dataset):
         self.shard_names = manifest["shards"]
         self.graph_index = manifest["graph_index"]
         self.split_indices = load_splits(splits_path)[split]
-        self._shard_cache: dict[int, list[Data]] = {}
+        self._graphs = self._preload_split(split)
 
-    def _load_shard(self, shard_id: int) -> list[Data]:
-        if shard_id not in self._shard_cache:
+    def _preload_split(self, split: str) -> list[Data]:
+        """Load all shards required by a split once into memory."""
+        shard_ids = {
+            self.graph_index[int(global_idx)][0]
+            for global_idx in self.split_indices
+        }
+        shard_buffers: dict[int, list[Data]] = {}
+        for shard_id in tqdm(sorted(shard_ids), desc=f"Loading {split} shards"):
             shard_name = self.shard_names[shard_id]
-            self._shard_cache = {
-                shard_id: torch.load(
-                    self.shard_dir / shard_name,
-                    weights_only=False,
-                )
-            }
-        return self._shard_cache[shard_id]
+            shard_buffers[shard_id] = torch.load(
+                self.shard_dir / shard_name,
+                weights_only=False,
+            )
+        graphs = []
+        for global_idx in self.split_indices:
+            shard_id, local_idx = self.graph_index[int(global_idx)]
+            graphs.append(shard_buffers[shard_id][local_idx])
+        return graphs
 
     def __len__(self) -> int:
-        return self.split_indices.shape[0]
+        return len(self._graphs)
 
     def __getitem__(self, index: int) -> Data:
-        global_idx = int(self.split_indices[index])
-        shard_id, local_idx = self.graph_index[global_idx]
-        shard = self._load_shard(shard_id)
-        return shard[local_idx]
+        return self._graphs[index]
 
 
 def collate_graphs(batch: list[Data]) -> Batch:

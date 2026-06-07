@@ -4,8 +4,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-pip install -q torch-geometric torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.5.0+cu124.html
+TORCH_TAG=$(python -c "import torch; v=torch.__version__.split('+')[0]; c=torch.version.cuda; print('torch-'+v+'+cu'+c.replace('.','') if c else 'torch-'+v+'+cpu')")
+PYG_INDEX="https://data.pyg.org/whl/${TORCH_TAG}.html"
+
+pip install -q torch-geometric
+pip install -q pyg-lib torch-scatter torch-sparse -f "${PYG_INDEX}"
 pip install -q -e .
 
 if [ ! -f .env ]; then

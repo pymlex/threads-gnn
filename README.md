@@ -41,7 +41,7 @@ threads-gnn/
 
 ## Google Colab
 
-Open a terminal in Colab and run the commands below. Do not use notebook cells.
+Open a terminal in Colab and run the commands below.
 
 ### Clone
 
@@ -52,7 +52,7 @@ cd threads-gnn
 
 ### Install
 
-Creates `.env` from `.env.example`, installs PyTorch, PyG, and project dependencies, then opens GitHub browser authentication.
+Creates `.env` from `.env.example`, installs PyG wheels matched to the Colab PyTorch build, then opens GitHub browser authentication.
 
 ```bash
 bash scripts/install.sh
@@ -151,28 +151,6 @@ python scripts/push_hf.py --repo-id pymlex/threads-gnn
 | `--checkpoints-dir` | `checkpoints` | Checkpoint directory |
 | `--seed` | `42` | Random seed in checkpoint filenames |
 
-### Feature ablation
-
-```bash
-python scripts/ablation.py --config configs/default.yaml --architecture gin
-```
-
-| Argument | Default | Description |
-|---|---|---|
-| `--config` | `configs/default.yaml` | Experiment configuration path |
-| `--architecture` | `gin` | Architecture used for ablation |
-
-### Compare pooling
-
-```bash
-python scripts/compare_pooling.py --config configs/default.yaml --architecture gin
-```
-
-| Argument | Default | Description |
-|---|---|---|
-| `--config` | `configs/default.yaml` | Experiment configuration path |
-| `--architecture` | `gin` | Architecture used for pooling comparison |
-
 ## Structural node features
 
 Because the dataset has no node features, each graph receives engineered structural descriptors controlled by `FeatureConfig` in `schemas.py`. All features are enabled by default. The exact configuration is saved to `data/processed/feature_config.json` during preprocessing.
@@ -220,21 +198,6 @@ Let $L = I - D^{-1/2} A D^{-1/2}$ be the normalised Laplacian. The smallest $k$ 
 Let $P = D^{-1}A$ be the random-walk transition matrix and $R^{(t)} = P^t$. The diagonal entries $R^{(t)}_{ii}$ for $t = 1, \ldots, T$ form RWSE features.
 
 With the default configuration, the input dimension is $38$.
-
-### Feature ablation table
-
-Run `scripts/ablation.py` to regenerate this table from validation MCC.
-
-| Variant | Feature dim | Val MCC | Test MCC |
-|---|---:|---:|---:|
-| full | 38 | — | — |
-| no_laplacian_pe | 30 | — | — |
-| no_rwse | 30 | — | — |
-| no_pagerank | 37 | — | — |
-| no_clustering | 37 | — | — |
-| no_kcore | 37 | — | — |
-| no_degree_bucket | 22 | — | — |
-| degree_only | 1 | — | — |
 
 ## Graph encoders
 
@@ -293,7 +256,7 @@ $$\mathbf{g} = \sum_{i \in V} \mathbf{h}_i$$
 
 $$s_i = \mathbf{w}^{\top}\tanh(\mathbf{W}\mathbf{h}_i), \qquad \alpha_i = \frac{\exp(s_i)}{\sum_{j \in V}\exp(s_j)}, \qquad \mathbf{g} = \sum_{i \in V} \alpha_i \mathbf{h}_i$$
 
-`scripts/compare_pooling.py` selects the pooling method by validation MCC. The same pooling is then used for GIN, PNA, and GAT.
+All three architectures use the same pooling method from `configs/default.yaml`.
 
 ## Training protocol
 
@@ -304,7 +267,7 @@ $$s_i = \mathbf{w}^{\top}\tanh(\mathbf{W}\mathbf{h}_i), \qquad \alpha_i = \frac{
 - mixed-precision training on GPU
 - gradient clipping with max norm $1.0$
 - early stopping on validation MCC with patience $20$
-- batch size $128$ for Colab T4
+- batch size $512$ for Colab T4
 
 The test split is never used for model selection. Architectures are ranked by best validation MCC. Test metrics for the selected architecture are reported once after training.
 
@@ -366,7 +329,7 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 | num_layers | 4 |
 | dropout | 0.2 |
 | num_heads | 4 |
-| batch_size | 128 |
+| batch_size | 512 |
 | learning_rate | $10^{-3}$ |
 | weight_decay | $10^{-4}$ |
 | early_stopping_patience | 20 |
@@ -404,13 +367,13 @@ The project is under GPL-3.0 license.
 }
 @inproceedings{corso2020pna,
   title = {Principal Neighbourhood Aggregation for Graph Nets},
-  author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li{\`o} and Petar Veli{\v{c}}kovi{\'c}},
+  author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li and Petar Velickovic},
   booktitle = {Advances in Neural Information Processing Systems},
   year = {2020},
 }
 @inproceedings{velickovic2018gat,
   title = {Graph Attention Networks},
-  author = {Petar Veli{\v{c}}kovi{\'c} and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li{\`o} and Yoshua Bengio},
+  author = {Petar Velickovic and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li and Yoshua Bengio},
   booktitle = {International Conference on Learning Representations},
   year = {2018},
 }

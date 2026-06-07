@@ -48,7 +48,7 @@ class DataConfig(BaseModel):
 
 
 class TrainingConfig(BaseModel):
-    batch_size: int = 128
+    batch_size: int = 512
     num_epochs: int = 200
     learning_rate: float = 1e-3
     weight_decay: float = 1e-4
@@ -56,7 +56,7 @@ class TrainingConfig(BaseModel):
     early_stopping_patience: int = 20
     scheduler: Literal["cosine", "plateau"] = "cosine"
     use_amp: bool = True
-    num_workers: int = 2
+    num_workers: int = 0
 
 
 class OutputConfig(BaseModel):

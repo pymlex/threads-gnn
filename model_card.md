@@ -89,13 +89,13 @@ The project is under GPL-3.0 license.
 }
 @inproceedings{corso2020pna,
   title = {Principal Neighbourhood Aggregation for Graph Nets},
-  author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li{\`o} and Petar Veli{\v{c}}kovi{\'c}},
+  author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li and Petar Velickovic},
   booktitle = {Advances in Neural Information Processing Systems},
   year = {2020},
 }
 @inproceedings{velickovic2018gat,
   title = {Graph Attention Networks},
-  author = {Petar Veli{\v{c}}kovi{\'c} and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li{\`o} and Yoshua Bengio},
+  author = {Petar Velickovic and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li and Yoshua Bengio},
   booktitle = {International Conference on Learning Representations},
   year = {2018},
 }
