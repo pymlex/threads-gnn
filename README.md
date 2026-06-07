@@ -30,6 +30,7 @@ threads-gnn/
 ├── configs/default.yaml
 ├── .env.example
 ├── scripts/install.sh
+├── scripts/push_github.sh
 ├── data/
 ├── features/
 ├── models/
@@ -126,6 +127,20 @@ python scripts/plot_curves.py
 | `--runs-dir` | `runs` | Directory with epoch metrics |
 | `--seed` | `42` | Random seed in run folder names |
 
+### Push results to GitHub
+
+Aggregates metrics, writes comparison tables and training curves, then commits and pushes `runs/` artefacts to the repository.
+
+```bash
+bash scripts/push_github.sh
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| seed | `42` | Random seed in run folder names |
+
+Tracked files: `architecture_comparison.csv`, `selected_model.json`, `training_curves.png`, per-architecture `epoch_metrics.csv`, `final_metrics.json`, confusion matrices, classification reports, and test predictions. Checkpoints remain local and are uploaded to Hugging Face separately.
+
 ### Full pipeline
 
 ```bash
@@ -201,44 +216,115 @@ With the default configuration, the input dimension is $38$.
 
 ## Graph encoders
 
-All models share the same backbone:
+Three graph encoders are compared under an identical protocol: $L = 4$ message-passing layers, hidden dimension $d = 128$, dropout $0.2$, attention pooling, virtual node, and a shared classifier head. Each encoder maps structural node features $\mathbf{x}_i \in \mathbb{R}^{38}$ to graph-level logits.
 
-1. input projection $\mathbb{R}^{d_{\text{in}}} \to \mathbb{R}^{d}$
-2. graph encoder with $L$ message-passing layers
-3. graph-level pooling
-4. MLP classifier head
+**Shared input projection**
 
-Optional virtual node updates are applied after every encoder layer. For batch $B$ with graph indices $b(i)$:
+$$\mathbf{h}_i^{(0)} = \mathrm{Dropout}\left(\mathrm{LayerNorm}\left(\mathrm{ReLU}\left(\mathbf{W}_{\text{in}}\mathbf{x}_i + \mathbf{b}_{\text{in}}\right)\right)\right)$$
 
-$$\mathbf{v}_g \leftarrow \mathrm{MLP}\left(\mathbf{v}_g + \sum_{i:\, b(i)=g} \mathbf{h}_i\right), \qquad \mathbf{h}_i \leftarrow \mathbf{h}_i + \mathbf{v}_{b(i)}$$
+**Shared virtual node update** after every encoder layer. For graph $g$ with node set $V_g$ and batch index $b(i)$:
+
+$$\mathbf{v}_g \leftarrow \mathrm{MLP}\left(\mathbf{v}_g + \sum_{i \in V_g} \mathbf{h}_i\right), \qquad \mathbf{h}_i \leftarrow \mathbf{h}_i + \mathbf{v}_{b(i)}$$
+
+**Shared classifier head** on the pooled graph embedding $\mathbf{g}$:
+
+$$\hat{\mathbf{y}} = \mathbf{W}_{\text{out}}\,\mathrm{Dropout}\left(\mathrm{LayerNorm}\left(\mathrm{ReLU}\left(\mathbf{W}_1 \mathbf{g} + \mathbf{b}_1\right)\right)\right) + \mathbf{b}_{\text{out}}$$
 
 ### GIN
 
-Graph Isomorphism Network convolution with MLP $\phi$ and neighbourhood aggregation $\mathcal{N}(i)$:
+Graph Isomorphism Network treats neighbourhood aggregation as an injective multiset function. For layer $\ell$, MLP $\phi_{\Theta}$ and neighbourhood $\mathcal{N}(i)$:
 
-$$\mathbf{h}_i^{(\ell+1)} = \mathrm{ReLU}\left(\mathrm{BN}\left((1+\varepsilon)\mathbf{h}_i^{(\ell)} + \sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell)}\right)\right)$$
+$$\mathbf{u}_i^{(\ell)} = (1 + \varepsilon)\,\mathbf{h}_i^{(\ell)} + \sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell)}$$
 
-with residual connection $\mathbf{h}_i^{(\ell+1)} \leftarrow \mathbf{h}_i^{(\ell)} + \mathbf{h}_i^{(\ell+1)}$.
+$$\tilde{\mathbf{h}}_i^{(\ell+1)} = \phi_{\Theta}\!\left(\mathbf{u}_i^{(\ell)}\right), \qquad \mathbf{h}_i^{(\ell+1)} = \mathbf{h}_i^{(\ell)} + \mathrm{Dropout}\!\left(\mathrm{ReLU}\!\left(\mathrm{LayerNorm}\!\left(\tilde{\mathbf{h}}_i^{(\ell+1)}\right)\right)\right)$$
+
+With $\varepsilon = 0$ and a two-layer perceptron inside $\phi_{\Theta}$, GIN is the strongest classical Weisfeiler–Lehman discriminator among the three encoders. It does not assign edge-specific weights: every neighbour enters the sum with unit coefficient before the MLP.
+
+```mermaid
+flowchart TB
+    X["Structural features x"] --> Proj["Input projection"]
+    Proj --> GIN["GINConv + MLP"]
+    GIN --> Res["Residual + LayerNorm"]
+    Res --> VN["Virtual node pool-broadcast"]
+    VN --> GIN2["GIN block x3"]
+    GIN2 --> Pool["Attention pooling"]
+    Pool --> Head["Classifier MLP"]
+    Head --> Out["Binary logits"]
+    GIN --> Sum["Neighbour sum"]
+    Sum --> GIN
+```
 
 ### PNA
 
-Principal Neighbourhood Aggregation combines aggregators $\mu$, $\max$, $\min$, $\sigma$ with degree scalers $S(\mathbf{D}, \alpha)$:
+Principal Neighbourhood Aggregation keeps multiple statistics over each neighbourhood and rescales them by node degree. Let $\mathbf{h}_i^{(\ell)}$ be the centre embedding and $\mathbf{h}_{ij} = h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})$ the message from neighbour $j$:
 
-$$\mathbf{h}_i^{(\ell+1)} = \gamma_{\Theta}\left(\mathbf{h}_i^{(\ell)}, \bigoplus_{j \in \mathcal{N}(i)} h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})\right)$$
+$$\mu_i = \frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}, \quad m_i = \max_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}$$
 
-The operator $\bigoplus$ applies identity, amplification, and attenuation scalers to mean, max, min, and standard deviation aggregators. The in-degree histogram is computed on the training split only.
+$$\underline{m}_i = \min_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}, \quad \sigma_i = \sqrt{\frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \left(\mathbf{h}_{ij} - \mu_i\right)^{\odot 2}}$$
+
+Degree scalers $s \in \{\text{identity}, \text{amplification}, \text{attenuation}\}$ are applied to each statistic using the training-split in-degree histogram. The aggregated message is passed through $\gamma_{\Theta}$ and the same residual block as GIN. PNA is the most expressive encoder in this comparison because it separates mean trend, extremal neighbours, and local dispersion.
+
+```mermaid
+flowchart TB
+    X["Structural features x"] --> Proj["Input projection"]
+    Proj --> PNA["PNAConv"]
+    subgraph Agg["Neighbourhood statistics"]
+        M["mean"]
+        MX["max"]
+        MN["min"]
+        SD["std"]
+    end
+    PNA --> M
+    PNA --> MX
+    PNA --> MN
+    PNA --> SD
+    M --> Sc["Degree scalers"]
+    MX --> Sc
+    MN --> Sc
+    SD --> Sc
+    Sc --> VN["Virtual node"]
+    VN --> PNA2["PNA block x3"]
+    PNA2 --> Pool["Attention pooling"]
+    Pool --> Head["Classifier MLP"]
+    Head --> Out["Binary logits"]
+```
 
 ### GAT
 
-Multi-head graph attention with leaky ReLU scoring:
+Graph Attention Network assigns a data-dependent weight to every edge. For head $k$ at layer $\ell$:
 
-$$e_{ij} = \mathrm{LeakyReLU}\left(\mathbf{a}^{\top} [\mathbf{W}\mathbf{h}_i \| \mathbf{W}\mathbf{h}_j]\right)$$
+$$e_{ij}^{(k)} = \mathrm{LeakyReLU}\!\left({\mathbf{a}^{(k)}}^{\top}\!\left[\mathbf{W}^{(k)}\mathbf{h}_i^{(\ell)} \,\|\, \mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}\right]\right)$$
 
-$$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}$$
+$$\alpha_{ij}^{(k)} = \frac{\exp\!\left(e_{ij}^{(k)}\right)}{\sum_{u \in \mathcal{N}(i)\cup\{i\}} \exp\!\left(e_{iu}^{(k)}\right)}$$
 
-$$\mathbf{h}_i' = \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij} \mathbf{W}\mathbf{h}_j\right)$$
+$$\mathbf{h}_i^{(\ell+1,k)} = \sum_{j \in \mathcal{N}(i)\cup\{i\}} \alpha_{ij}^{(k)}\,\mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}$$
 
-Intermediate layers concatenate heads. The final layer averages head outputs to keep the hidden dimension fixed.
+Layers $1$–$3$ concatenate $K = 4$ heads. The final layer averages head outputs so that $\mathbf{h}_i^{(L)} \in \mathbb{R}^{d}$. Residual connection, LayerNorm, and ELU activation follow each attention block. GAT is the only encoder that learns neighbour-specific coefficients at inference time.
+
+```mermaid
+flowchart TB
+    X["Structural features x"] --> Proj["Input projection"]
+    Proj --> GAT["GATConv"]
+    subgraph Heads["4 attention heads"]
+        H1["Head 1"]
+        H2["Head 2"]
+        H3["Head 3"]
+        H4["Head 4"]
+    end
+    GAT --> H1
+    GAT --> H2
+    GAT --> H3
+    GAT --> H4
+    H1 --> Merge["Concat or mean"]
+    H2 --> Merge
+    H3 --> Merge
+    H4 --> Merge
+    Merge --> VN["Virtual node"]
+    VN --> GAT2["GAT block x3"]
+    GAT2 --> Pool["Attention pooling"]
+    Pool --> Head["Classifier MLP"]
+    Head --> Out["Binary logits"]
+```
 
 ## Graph-level pooling
 
@@ -262,11 +348,11 @@ All three architectures use the same pooling method from `configs/default.yaml`.
 
 - stratified train, validation, and test split with ratios $0.8 / 0.1 / 0.1$
 - random seed $42$
-- AdamW optimiser with learning rate $10^{-3}$ and weight decay $10^{-4}$
-- cosine learning-rate schedule
+- AdamW optimiser with learning rate $3 \times 10^{-3}$ and weight decay $10^{-4}$
+- cosine learning-rate schedule over $40$ epochs
 - full-precision training on GPU
 - gradient clipping with max norm $1.0$
-- early stopping on validation MCC with patience $20$
+- early stopping on validation MCC with patience $8$
 - batch size $4096$
 
 The test split is never used for model selection. Architectures are ranked by best validation MCC. Test metrics for the selected architecture are reported once after training.
