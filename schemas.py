@@ -48,9 +48,9 @@ class DataConfig(BaseModel):
 
 
 class TrainingConfig(BaseModel):
-    batch_size: int = 16384
+    batch_size: int = 4096
     num_epochs: int = 40
-    learning_rate: float = 5e-3
+    learning_rate: float = 3e-3
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
     early_stopping_patience: int = 8
