@@ -1,0 +1,37 @@
+{
+  "selected_architecture": "gin",
+  "selection_metric": "validation_mcc",
+  "best_val_mcc": 0.5609368123898547,
+  "comparison_table": [
+    {
+      "architecture": "gin",
+      "best_val_mcc": 0.5609368123898547,
+      "val_mcc": 0.5609368123898547,
+      "val_f1": 0.7997876669910643,
+      "val_roc_auc": 0.8413672351687064,
+      "test_mcc": 0.5641958688616364,
+      "test_f1": 0.8016561687882658,
+      "test_roc_auc": 0.8417462134967497
+    },
+    {
+      "architecture": "pna",
+      "best_val_mcc": 0.5608741238600133,
+      "val_mcc": 0.5608741238600133,
+      "val_f1": 0.8000882028665932,
+      "val_roc_auc": 0.8414286324806977,
+      "test_mcc": 0.5634718751850968,
+      "test_f1": 0.801599156488885,
+      "test_roc_auc": 0.841912495857133
+    },
+    {
+      "architecture": "gat",
+      "best_val_mcc": 0.5592485345150515,
+      "val_mcc": 0.5592485345150515,
+      "val_f1": 0.7970688725049452,
+      "val_roc_auc": 0.8416313687920811,
+      "test_mcc": 0.565495932705714,
+      "test_f1": 0.8002152080344332,
+      "test_roc_auc": 0.8417979841712353
+    }
+  ]
+}

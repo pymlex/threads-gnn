@@ -1,0 +1,51 @@
+{
+  "architecture": "pna",
+  "seed": 42,
+  "best_val_mcc": 0.5608741238600133,
+  "val_metrics": {
+    "mcc": 0.5608741238600133,
+    "accuracy": 0.7767984637352898,
+    "balanced_accuracy": 0.7743804000061563,
+    "precision": 0.7394033257254646,
+    "recall": 0.8716248678773902,
+    "f1": 0.8000882028665932,
+    "roc_auc": 0.8414286324806977,
+    "pr_auc": 0.8077992371480731
+  },
+  "test_metrics": {
+    "mcc": 0.5634718751850968,
+    "accuracy": 0.7776355310453493,
+    "balanced_accuracy": 0.7751195097151189,
+    "precision": 0.7383457429588863,
+    "recall": 0.876705746684605,
+    "f1": 0.801599156488885,
+    "roc_auc": 0.841912495857133,
+    "pr_auc": 0.8085752600086387
+  },
+  "confusion_matrix": {
+    "counts": [
+      [
+        6670,
+        3233
+      ],
+      [
+        1283,
+        9123
+      ]
+    ],
+    "normalised": [
+      [
+        0.6735332727456327,
+        0.3264667272543674
+      ],
+      [
+        0.12329425331539497,
+        0.876705746684605
+      ]
+    ],
+    "counts_path": "runs/pna_seed42/test_confusion_counts.csv",
+    "normalised_path": "runs/pna_seed42/test_confusion_normalised.csv",
+    "figure_path": "runs/pna_seed42/test_confusion_matrix.png"
+  },
+  "classification_report": "              precision    recall  f1-score   support\n\n           0     0.8387    0.6735    0.7471      9903\n           1     0.7383    0.8767    0.8016     10406\n\n    accuracy                         0.7776     20309\n   macro avg     0.7885    0.7751    0.7743     20309\nweighted avg     0.7873    0.7776    0.7750     20309\n"
+}

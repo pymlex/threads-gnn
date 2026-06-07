@@ -1,0 +1,51 @@
+{
+  "architecture": "gin",
+  "seed": 42,
+  "best_val_mcc": 0.5609368123898547,
+  "val_metrics": {
+    "mcc": 0.5609368123898547,
+    "accuracy": 0.7771431385100201,
+    "balanced_accuracy": 0.7748098221414874,
+    "precision": 0.7410443478973686,
+    "recall": 0.8686461035841261,
+    "f1": 0.7997876669910643,
+    "roc_auc": 0.8413672351687064,
+    "pr_auc": 0.8093612949314712
+  },
+  "test_metrics": {
+    "mcc": 0.5641958688616364,
+    "accuracy": 0.7782756413412772,
+    "balanced_accuracy": 0.775832009081207,
+    "precision": 0.7400178905424087,
+    "recall": 0.874495483374976,
+    "f1": 0.8016561687882658,
+    "roc_auc": 0.8417462134967497,
+    "pr_auc": 0.8087144857201518
+  },
+  "confusion_matrix": {
+    "counts": [
+      [
+        6706,
+        3197
+      ],
+      [
+        1306,
+        9100
+      ]
+    ],
+    "normalised": [
+      [
+        0.6771685347874381,
+        0.32283146521256184
+      ],
+      [
+        0.12550451662502402,
+        0.874495483374976
+      ]
+    ],
+    "counts_path": "runs/gin_seed42/test_confusion_counts.csv",
+    "normalised_path": "runs/gin_seed42/test_confusion_normalised.csv",
+    "figure_path": "runs/gin_seed42/test_confusion_matrix.png"
+  },
+  "classification_report": "              precision    recall  f1-score   support\n\n           0     0.8370    0.6772    0.7486      9903\n           1     0.7400    0.8745    0.8017     10406\n\n    accuracy                         0.7783     20309\n   macro avg     0.7885    0.7758    0.7752     20309\nweighted avg     0.7873    0.7783    0.7758     20309\n"
+}

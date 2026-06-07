@@ -1,0 +1,51 @@
+{
+  "architecture": "gat",
+  "seed": 42,
+  "best_val_mcc": 0.5592485345150515,
+  "val_metrics": {
+    "mcc": 0.5592485345150515,
+    "accuracy": 0.7777340095524152,
+    "balanced_accuracy": 0.7758445565620626,
+    "precision": 0.7489228689701782,
+    "recall": 0.8518304987027961,
+    "f1": 0.7970688725049452,
+    "roc_auc": 0.8416313687920811,
+    "pr_auc": 0.8095525823199479
+  },
+  "test_metrics": {
+    "mcc": 0.565495932705714,
+    "accuracy": 0.7805898862573243,
+    "balanced_accuracy": 0.7786345638412377,
+    "precision": 0.7500420238695579,
+    "recall": 0.8575821641360754,
+    "f1": 0.8002152080344332,
+    "roc_auc": 0.8417979841712353,
+    "pr_auc": 0.8092591014753228
+  },
+  "confusion_matrix": {
+    "counts": [
+      [
+        6929,
+        2974
+      ],
+      [
+        1482,
+        8924
+      ]
+    ],
+    "normalised": [
+      [
+        0.6996869635464,
+        0.3003130364535999
+      ],
+      [
+        0.14241783586392465,
+        0.8575821641360754
+      ]
+    ],
+    "counts_path": "runs/gat_seed42/test_confusion_counts.csv",
+    "normalised_path": "runs/gat_seed42/test_confusion_normalised.csv",
+    "figure_path": "runs/gat_seed42/test_confusion_matrix.png"
+  },
+  "classification_report": "              precision    recall  f1-score   support\n\n           0     0.8238    0.6997    0.7567      9903\n           1     0.7500    0.8576    0.8002     10406\n\n    accuracy                         0.7806     20309\n   macro avg     0.7869    0.7786    0.7785     20309\nweighted avg     0.7860    0.7806    0.7790     20309\n"
+}
