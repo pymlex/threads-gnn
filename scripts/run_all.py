@@ -35,6 +35,10 @@ def main() -> None:
         check=True,
     )
     subprocess.run([python, "scripts/plot_curves.py"], check=True)
+    subprocess.run(
+        [python, "scripts/plot_diagnostics.py", "--config", args.config],
+        check=True,
+    )
 
 
 if __name__ == "__main__":

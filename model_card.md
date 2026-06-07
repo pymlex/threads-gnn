@@ -1,13 +1,12 @@
 ---
-language: en
 license: gpl-3.0
 tags:
   - graph-neural-networks
   - pytorch-geometric
   - graph-classification
   - snap
-datasets:
-  - reddit_threads
+language:
+  - en
 metrics:
   - matthews_correlation
   - accuracy
@@ -15,26 +14,97 @@ metrics:
   - roc-auc
 library_name: pytorch
 pipeline_tag: graph-ml
+datasets:
+  - reddit_threads
 ---
 
-# pymlex/threads-gnn
+# Graph Classification on SNAP Reddit Threads
 
-Graph classification model for the [SNAP Reddit Threads](https://snap.stanford.edu/data/reddit_threads.html) dataset. The dataset was collected in May 2018. Nodes are Reddit users and undirected edges are reply relations. The task is binary graph classification.
+Binary graph classification on [SNAP Reddit Threads](https://snap.stanford.edu/data/reddit_threads.html) with PyTorch Geometric. Full training code, preprocessing, metric tables, figures, and reproduction commands:
 
-## Model description
+https://github.com/pymlex/threads-gnn
 
-Three encoders are compared under an identical protocol: GIN, PNA, and GAT. Model selection uses validation Matthews correlation coefficient. Structural node features are engineered because the dataset provides no raw node attributes.
+## Overview
 
-## Training data
+Nodes are Reddit users in a discussion thread. Undirected edges are reply relations. The label marks whether the thread is discussion-based. The dataset has 203,088 graphs, 11--97 nodes per graph, and no raw node features. We engineer 38 structural descriptors per node and compare three encoders under one protocol: GIN, PNA, and GAT. Each model uses four message-passing layers, hidden dimension 128, attention pooling, and a virtual node. Model selection uses validation Matthews correlation coefficient. Experiments used Google Colab with an NVIDIA GPU, batch size 4096, learning rate 0.003, and early stopping with patience 8.
 
-Source: [SNAP Reddit Threads](https://snap.stanford.edu/data/reddit_threads.html)
+## Results
 
-- 203,088 graphs
-- binary labels
-- 11–97 nodes per graph
-- no node or edge features
+### Architecture comparison
 
-## Usage
+| Architecture | Best val MCC | Test MCC | Test F1 | Test ROC-AUC |
+| --- | --- | --- | --- | --- |
+| GIN | 0.5609 | 0.5642 | 0.8017 | 0.8417 |
+| PNA | 0.5609 | 0.5635 | 0.8016 | 0.8419 |
+| GAT | 0.5592 | 0.5655 | 0.8002 | 0.8418 |
+
+**Selected checkpoint: GIN** (`model.pt`), chosen by best validation MCC. GIN leads validation MCC by a margin of 6e-5 over PNA. On the held-out test split GAT reaches the highest MCC 0.5655, while ROC-AUC stays near 0.842 for all three encoders.
+
+### Training curves
+
+![Training curves for GIN, PNA, and GAT](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/training_curves.png)
+
+Validation MCC rises in the first five epochs and plateaus near 0.55--0.56 for every encoder. Best checkpoints appear at epoch 31 for GIN, epoch 23 for PNA, and epoch 32 for GAT.
+
+### Test ROC curves
+
+![Combined test ROC curves](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/test_roc_curves.png)
+
+Per-architecture plots:
+
+- GIN: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gin_seed42/test_roc_curve.png
+- PNA: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/pna_seed42/test_roc_curve.png
+- GAT: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gat_seed42/test_roc_curve.png
+
+### Logit distributions on the test split
+
+![Combined logit histograms for class 1](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/test_logit_histograms.png)
+
+Densities are split by ground-truth label. Separation between the two classes reflects ranking quality beyond the fixed 0.5 probability threshold.
+
+- GIN: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gin_seed42/test_logit_histogram.png
+- PNA: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/pna_seed42/test_logit_histogram.png
+- GAT: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gat_seed42/test_logit_histogram.png
+
+### Confusion matrices on the test split
+
+#### GIN
+
+![GIN test confusion matrix](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gin_seed42/test_confusion_matrix.png)
+
+#### PNA
+
+![PNA test confusion matrix](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/pna_seed42/test_confusion_matrix.png)
+
+#### GAT
+
+![GAT test confusion matrix](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gat_seed42/test_confusion_matrix.png)
+
+All models favour recall on the positive class. Class 0 recall stays near 0.67--0.70 while class 1 recall exceeds 0.85. GAT yields the highest class-0 recall 0.700 and test accuracy 0.781.
+
+### Selected model test metrics (GIN)
+
+| Metric | Value |
+| --- | --- |
+| MCC | 0.5642 |
+| Accuracy | 0.7783 |
+| Balanced accuracy | 0.7758 |
+| Precision | 0.7400 |
+| Recall | 0.8745 |
+| F1 | 0.8017 |
+| ROC-AUC | 0.8417 |
+| PR-AUC | 0.8087 |
+
+## Checkpoint
+
+| File | Description |
+| --- | --- |
+| `model.pt` | Best GIN checkpoint selected by validation MCC |
+| `config.json` | Experiment configuration for the selected run |
+| `final_metrics.json` | Validation and test metrics for the selected run |
+| `selected_model.json` | Architecture comparison and selection record |
+
+## Inference
 
 ```python
 from huggingface_hub import hf_hub_download
@@ -42,21 +112,12 @@ import torch
 
 checkpoint_path = hf_hub_download(repo_id="pymlex/threads-gnn", filename="model.pt")
 checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+state_dict = checkpoint["model_state_dict"]
 ```
 
-Full training and evaluation commands are in the [GitHub repository](https://github.com/pymlex/threads-gnn).
+Clone https://github.com/pymlex/threads-gnn for the full `GINClassifier` definition, structural feature pipeline, and batched inference over PyG `Data` objects.
 
-## Results
-
-| Architecture | Best val MCC | Test MCC | Test F1 | Test ROC-AUC |
-|---|---:|---:|---:|---:|
-| GIN | 0.5609 | 0.5642 | 0.8017 | 0.8417 |
-| PNA | 0.5609 | 0.5635 | 0.8016 | 0.8419 |
-| GAT | 0.5592 | 0.5655 | 0.8002 | 0.8418 |
-
-Selected model: GIN by validation MCC.
-
-## References
+## Citation
 
 ```bibtex
 @misc{threads_gnn,
@@ -65,10 +126,11 @@ Selected model: GIN by validation MCC.
   year = {2026},
   publisher = {GitHub},
   howpublished = {\url{https://github.com/pymlex/threads-gnn}},
+  note = {Hugging Face model pymlex/threads-gnn}
 }
 ```
 
-The project is under GPL-3.0 license.
+## References
 
 ```bibtex
 @inproceedings{karateclub,
@@ -98,3 +160,5 @@ The project is under GPL-3.0 license.
   year = {2018},
 }
 ```
+
+The project is under GPL-3.0 license.

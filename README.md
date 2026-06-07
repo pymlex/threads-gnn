@@ -127,6 +127,22 @@ python scripts/plot_curves.py
 | `--runs-dir` | `runs` | Directory with epoch metrics |
 | `--seed` | `42` | Random seed in run folder names |
 
+### Plot logit histograms and ROC curves
+
+Loads best checkpoints, runs inference on the test split, and writes logit histograms plus ROC curves.
+
+```bash
+python scripts/plot_diagnostics.py --config configs/default.yaml
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+| `--runs-dir` | `runs` | Directory for figure output |
+| `--checkpoints-dir` | `checkpoints` | Checkpoint directory |
+| `--split` | `test` | `train`, `val`, or `test` |
+| `--seed` | `42` | Random seed in checkpoint filenames |
+
 ### Push results to GitHub
 
 Aggregates metrics, writes comparison tables and training curves, then commits and pushes `runs/` artefacts to the repository.
@@ -153,7 +169,7 @@ python scripts/run_all.py --config configs/default.yaml
 
 ### Push to Hugging Face
 
-Reads `HF_TOKEN` from `.env`.
+Reads `HF_TOKEN` from `.env`. Uploads the selected GIN checkpoint and `model_card.md`.
 
 ```bash
 python scripts/push_hf.py --repo-id pymlex/threads-gnn
@@ -386,6 +402,14 @@ Experiments use seed $42$, batch size $4096$, learning rate $3 \times 10^{-3}$, 
 Validation MCC rises sharply in the first five epochs and plateaus near $0.55$–$0.56$ for every encoder. Best checkpoints appear at epoch $31$ for GIN, epoch $23$ for PNA, and epoch $32$ for GAT. PNA stops after $31$ epochs, GAT after $40$, and GIN after early stopping once validation MCC fails to improve for eight consecutive epochs.
 
 ![Training curves](runs/training_curves.png)
+
+### ROC curves and logit histograms
+
+![Test ROC curves](runs/test_roc_curves.png)
+
+![Test logit histograms](runs/test_logit_histograms.png)
+
+Logit histograms show the distribution of class-1 logits split by ground-truth label. ROC curves report ranking quality independent of the 0.5 probability threshold.
 
 ### Confusion matrices
 
