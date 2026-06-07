@@ -48,15 +48,13 @@ Full training and evaluation commands are in the [GitHub repository](https://git
 
 ## Results
 
-Filled after the Colab experiment run.
-
 | Architecture | Best val MCC | Test MCC | Test F1 | Test ROC-AUC |
 |---|---:|---:|---:|---:|
-| GIN | — | — | — | — |
-| PNA | — | — | — | — |
-| GAT | — | — | — | — |
+| GIN | 0.5609 | 0.5642 | 0.8017 | 0.8417 |
+| PNA | 0.5609 | 0.5635 | 0.8016 | 0.8419 |
+| GAT | 0.5592 | 0.5655 | 0.8002 | 0.8418 |
 
-Selected model: —
+Selected model: GIN by validation MCC.
 
 ## References
 

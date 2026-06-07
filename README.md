@@ -369,31 +369,57 @@ Additional metrics: accuracy, balanced accuracy, precision, recall, F1, ROC-AUC,
 
 ## Results
 
-Values below are filled after the Colab run.
+Experiments use seed $42$, batch size $4096$, learning rate $3 \times 10^{-3}$, and early stopping on validation MCC. Model selection ranks architectures by best validation MCC only.
 
 ### Architecture comparison
 
 | Architecture | Best val MCC | Val F1 | Val ROC-AUC | Test MCC | Test F1 | Test ROC-AUC |
 |---|---:|---:|---:|---:|---:|---:|
-| GIN | — | — | — | — | — | — |
-| PNA | — | — | — | — | — | — |
-| GAT | — | — | — | — | — | — |
+| GIN | 0.5609 | 0.7998 | 0.8414 | 0.5642 | 0.8017 | 0.8417 |
+| PNA | 0.5609 | 0.8001 | 0.8414 | 0.5635 | 0.8016 | 0.8419 |
+| GAT | 0.5592 | 0.7971 | 0.8416 | 0.5655 | 0.8002 | 0.8418 |
 
-### Training curves
+**GIN** is selected with validation MCC $0.5609$, ahead of PNA by $6 \times 10^{-5}$ and ahead of GAT by $1.7 \times 10^{-3}$. On the held-out test split the ranking shifts slightly: GAT reaches the highest test MCC $0.5655$, followed by GIN $0.5642$ and PNA $0.5635$. ROC-AUC is stable across encoders at $0.841$–$0.842$, so the three models preserve nearly the same ranking quality while differing mainly in the class-wise error trade-off.
+
+### Training dynamics
+
+Validation MCC rises sharply in the first five epochs and plateaus near $0.55$–$0.56$ for every encoder. Best checkpoints appear at epoch $31$ for GIN, epoch $23$ for PNA, and epoch $32$ for GAT. PNA stops after $31$ epochs, GAT after $40$, and GIN after early stopping once validation MCC fails to improve for eight consecutive epochs.
 
 ![Training curves](runs/training_curves.png)
 
 ### Confusion matrices
 
-GIN test confusion matrix: `runs/gin_seed42/test_confusion_matrix.png`
+All models favour recall on the positive class. Class $0$ recall stays near $0.67$–$0.70$ while class $1$ recall exceeds $0.85$. GAT yields the highest class-$0$ recall $0.700$ and the highest test accuracy $0.781$, at the price of the lowest positive-class recall $0.858$ among the three encoders.
 
-PNA test confusion matrix: `runs/pna_seed42/test_confusion_matrix.png`
+![GIN test confusion matrix](runs/gin_seed42/test_confusion_matrix.png)
 
-GAT test confusion matrix: `runs/gat_seed42/test_confusion_matrix.png`
+![PNA test confusion matrix](runs/pna_seed42/test_confusion_matrix.png)
 
-### Selected model test metrics
+![GAT test confusion matrix](runs/gat_seed42/test_confusion_matrix.png)
 
-Filled from `runs/selected_model.json` and the corresponding `final_metrics.json` after model selection.
+### Selected model: GIN
+
+Test metrics for the checkpoint with best validation MCC:
+
+| Metric | Value |
+|---|---:|
+| MCC | 0.5642 |
+| Accuracy | 0.7783 |
+| Balanced accuracy | 0.7758 |
+| Precision | 0.7400 |
+| Recall | 0.8745 |
+| F1 | 0.8017 |
+| ROC-AUC | 0.8417 |
+| PR-AUC | 0.8087 |
+
+Test confusion counts:
+
+|  | Pred 0 | Pred 1 |
+|---|---:|---:|
+| True 0 | 6706 | 3197 |
+| True 1 | 1306 | 9100 |
+
+On this dataset the choice of graph encoder has a small effect once structural features, virtual node, and attention pooling are fixed. GIN wins model selection by validation MCC, yet none of the three encoders separates clearly on ROC-AUC. The remaining differences lie in precision and recall balance: PNA matches GIN on F1, while GAT trades positive recall for cleaner negative-class detection.
 
 ## Model weights
 
