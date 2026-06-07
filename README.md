@@ -256,7 +256,7 @@ flowchart TB
 
 ### PNA
 
-Principal Neighbourhood Aggregation keeps multiple statistics over each neighbourhood and rescales them by node degree. Let $\mathbf{h}*i^{(\ell)}$ be the centre embedding and $\mathbf{h}*{ij} = h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})$ the message from neighbour $j$:
+Principal Neighbourhood Aggregation keeps multiple statistics over each neighbourhood and rescales them by node degree. Let $\mathbf{h}_i^{(\ell)}$ be the centre embedding and $\mathbf{h}_{ij} = h_{\Theta}\!\left(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)}\right)$ the message from neighbour $j$.
 
 $$\mu_i = \frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \mathbf{h}*{ij}, \quad m_i = \max*{j \in \mathcal{N}(i)} \mathbf{h}_{ij}$$
 
