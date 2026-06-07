@@ -236,7 +236,7 @@ Graph Isomorphism Network treats neighbourhood aggregation as an injective multi
 
 $$\mathbf{u}_i^{(\ell)} = (1 + \varepsilon)\,\mathbf{h}_i^{(\ell)} + \sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell)}$$
 
-$$\tilde{\mathbf{h}}_i^{(\ell+1)} = \phi_{\Theta}\!\left(\mathbf{u}_i^{(\ell)}\right), \qquad \mathbf{h}_i^{(\ell+1)} = \mathbf{h}_i^{(\ell)} + \mathrm{Dropout}\!\left(\mathrm{ReLU}\!\left(\mathrm{LayerNorm}\!\left(\tilde{\mathbf{h}}_i^{(\ell+1)}\right)\right)\right)$$
+$$\tilde{\mathbf{h}}_i^{(\ell+1)} = \phi_{\Theta}\left(\mathbf{u}_i^{(\ell)}\right), \qquad \mathbf{h}_i^{(\ell+1)} = \mathbf{h}_i^{(\ell)} + \mathrm{Dropout}\left(\mathrm{ReLU}\left(\mathrm{LayerNorm}\left(\tilde{\mathbf{h}}_i^{(\ell+1)}\right)\right)\right)$$
 
 With $\varepsilon = 0$ and a two-layer perceptron inside $\phi_{\Theta}$, GIN is the strongest classical Weisfeiler–Lehman discriminator among the three encoders. It does not assign edge-specific weights: every neighbour enters the sum with unit coefficient before the MLP.
 
@@ -252,17 +252,17 @@ flowchart TB
     Head --> Out["Binary logits"]
     GIN --> Sum["Neighbour sum"]
     Sum --> GIN
-```
+````
 
 ### PNA
 
-Principal Neighbourhood Aggregation keeps multiple statistics over each neighbourhood and rescales them by node degree. Let $\mathbf{h}_i^{(\ell)}$ be the centre embedding and $\mathbf{h}_{ij} = h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})$ the message from neighbour $j$:
+Principal Neighbourhood Aggregation keeps multiple statistics over each neighbourhood and rescales them by node degree. Let $\mathbf{h}*i^{(\ell)}$ be the centre embedding and $\mathbf{h}*{ij} = h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})$ the message from neighbour $j$:
 
-$$\mu_i = \frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}, \quad m_i = \max_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}$$
+$$\mu_i = \frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \mathbf{h}*{ij}, \quad m_i = \max*{j \in \mathcal{N}(i)} \mathbf{h}_{ij}$$
 
-$$\underline{m}_i = \min_{j \in \mathcal{N}(i)} \mathbf{h}_{ij}, \quad \sigma_i = \sqrt{\frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} \left(\mathbf{h}_{ij} - \mu_i\right)^{\odot 2}}$$
+$$\underline{m}*i = \min*{j \in \mathcal{N}(i)} \mathbf{h}*{ij}, \quad \sigma_i = \sqrt{\frac{1}{|\mathcal{N}(i)|}\sum*{j \in \mathcal{N}(i)} \left(\mathbf{h}_{ij} - \mu_i\right)^{\odot 2}}$$
 
-Degree scalers $s \in \{\text{identity}, \text{amplification}, \text{attenuation}\}$ are applied to each statistic using the training-split in-degree histogram. The aggregated message is passed through $\gamma_{\Theta}$ and the same residual block as GIN. PNA is the most expressive encoder in this comparison because it separates mean trend, extremal neighbours, and local dispersion.
+Degree scalers $s \in {\text{identity}, \text{amplification}, \text{attenuation}}$ are applied to each statistic using the training-split degree histogram. The aggregated message is passed through $\gamma_{\Theta}$ and the same residual block as GIN. PNA is the most expressive encoder in this comparison because it separates mean trend, extremal neighbours, and local dispersion.
 
 ```mermaid
 flowchart TB
@@ -293,11 +293,11 @@ flowchart TB
 
 Graph Attention Network assigns a data-dependent weight to every edge. For head $k$ at layer $\ell$:
 
-$$e_{ij}^{(k)} = \mathrm{LeakyReLU}\!\left({\mathbf{a}^{(k)}}^{\top}\!\left[\mathbf{W}^{(k)}\mathbf{h}_i^{(\ell)} \,\|\, \mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}\right]\right)$$
+$$e_{ij}^{(k)} = \mathrm{LeakyReLU}\left({\mathbf{a}^{(k)}}^{\top}\left[\mathbf{W}^{(k)}\mathbf{h}_i^{(\ell)} ,|, \mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}\right]\right)$$
 
-$$\alpha_{ij}^{(k)} = \frac{\exp\!\left(e_{ij}^{(k)}\right)}{\sum_{u \in \mathcal{N}(i)\cup\{i\}} \exp\!\left(e_{iu}^{(k)}\right)}$$
+$$\alpha_{ij}^{(k)} = \frac{\exp\left(e_{ij}^{(k)}\right)}{\sum_{u \in \mathcal{N}(i)\cup{i}} \exp\left(e_{iu}^{(k)}\right)}$$
 
-$$\mathbf{h}_i^{(\ell+1,k)} = \sum_{j \in \mathcal{N}(i)\cup\{i\}} \alpha_{ij}^{(k)}\,\mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}$$
+$$\mathbf{h}*i^{(\ell+1,k)} = \sum*{j \in \mathcal{N}(i)\cup{i}} \alpha_{ij}^{(k)},\mathbf{W}^{(k)}\mathbf{h}_j^{(\ell)}$$
 
 Layers $1$–$3$ concatenate $K = 4$ heads. The final layer averages head outputs so that $\mathbf{h}_i^{(L)} \in \mathbb{R}^{d}$. Residual connection, LayerNorm, and ELU activation follow each attention block. GAT is the only encoder that learns neighbour-specific coefficients at inference time.
 
