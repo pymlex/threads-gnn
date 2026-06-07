@@ -55,7 +55,7 @@ class TrainingConfig(BaseModel):
     grad_clip: float = 1.0
     early_stopping_patience: int = 20
     scheduler: Literal["cosine", "plateau"] = "cosine"
-    use_amp: bool = True
+    use_amp: bool = False
     num_workers: int = 0
 
 

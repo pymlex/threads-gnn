@@ -52,7 +52,7 @@ training:
   grad_clip: 1.0
   early_stopping_patience: 20
   scheduler: cosine
-  use_amp: true
+  use_amp: false
   num_workers: 0
 
 output:

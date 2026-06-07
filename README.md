@@ -264,7 +264,7 @@ All three architectures use the same pooling method from `configs/default.yaml`.
 - random seed $42$
 - AdamW optimiser with learning rate $10^{-3}$ and weight decay $10^{-4}$
 - cosine learning-rate schedule
-- mixed-precision training on GPU
+- full-precision training on GPU
 - gradient clipping with max norm $1.0$
 - early stopping on validation MCC with patience $20$
 - batch size $512$ for Colab T4
