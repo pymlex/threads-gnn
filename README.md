@@ -259,16 +259,12 @@ With $\varepsilon = 0$ and a two-layer perceptron inside $\phi_{\Theta}$, GIN is
 ```mermaid
 flowchart TB
     X["Structural features x"] --> Proj["Input projection"]
-    Proj --> GIN["GINConv + MLP"]
-    GIN --> Res["Residual + LayerNorm"]
-    Res --> VN["Virtual node pool-broadcast"]
-    VN --> GIN2["GIN block x3"]
-    GIN2 --> Pool["Attention pooling"]
-    Pool --> Head["Classifier MLP"]
-    Head --> Out["Binary logits"]
-    GIN --> Sum["Neighbour sum"]
-    Sum --> GIN
-````
+    Proj --> Enc["GINConv, MLP, Residual, LayerNorm, Virtual node pool-broadcast, x4 layers"]
+    Enc --> Pool["Attention pooling"]
+    Pool --> Out["Classifier MLP, Binary logits"]
+    Enc --> Sum["Neighbour sum"]
+    Sum --> Enc
+```
 
 ### PNA
 
@@ -284,25 +280,11 @@ Degree scalers $s \in {\text{identity}, \text{amplification}, \text{attenuation}
 flowchart TB
     X["Structural features x"] --> Proj["Input projection"]
     Proj --> PNA["PNAConv"]
-    subgraph Agg["Neighbourhood statistics"]
-        M["mean"]
-        MX["max"]
-        MN["min"]
-        SD["std"]
-    end
-    PNA --> M
-    PNA --> MX
-    PNA --> MN
-    PNA --> SD
-    M --> Sc["Degree scalers"]
-    MX --> Sc
-    MN --> Sc
-    SD --> Sc
-    Sc --> VN["Virtual node"]
-    VN --> PNA2["PNA block x3"]
-    PNA2 --> Pool["Attention pooling"]
-    Pool --> Head["Classifier MLP"]
-    Head --> Out["Binary logits"]
+    PNA --> Stats["mean, max, min, std"]
+    Stats --> Sc["identity, amplification, attenuation scalers"]
+    Sc --> Enc["Virtual node, PNA block x3"]
+    Enc --> Pool["Attention pooling"]
+    Pool --> Out["Classifier MLP, Binary logits"]
 ```
 
 ### GAT
@@ -321,25 +303,11 @@ Layers $1$–$3$ concatenate $K = 4$ heads. The final layer averages head output
 flowchart TB
     X["Structural features x"] --> Proj["Input projection"]
     Proj --> GAT["GATConv"]
-    subgraph Heads["4 attention heads"]
-        H1["Head 1"]
-        H2["Head 2"]
-        H3["Head 3"]
-        H4["Head 4"]
-    end
-    GAT --> H1
-    GAT --> H2
-    GAT --> H3
-    GAT --> H4
-    H1 --> Merge["Concat or mean"]
-    H2 --> Merge
-    H3 --> Merge
-    H4 --> Merge
-    Merge --> VN["Virtual node"]
-    VN --> GAT2["GAT block x3"]
-    GAT2 --> Pool["Attention pooling"]
-    Pool --> Head["Classifier MLP"]
-    Head --> Out["Binary logits"]
+    GAT --> Heads["Head 1, Head 2, Head 3, Head 4"]
+    Heads --> Merge["Concat or mean"]
+    Merge --> Enc["Virtual node, GAT block x3"]
+    Enc --> Pool["Attention pooling"]
+    Pool --> Out["Classifier MLP, Binary logits"]
 ```
 
 ## Graph-level pooling
