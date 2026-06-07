@@ -407,9 +407,19 @@ Validation MCC rises sharply in the first five epochs and plateaus near $0.55$â€
 
 ![Test ROC curves](runs/test_roc_curves.png)
 
+The three ROC curves overlap almost completely. Test ROC-AUC values are 0.8417 for GIN, 0.8419 for PNA, and 0.8418 for GAT. All models reach true positive rate 0.80 near false positive rate 0.25, then flatten toward the upper-right corner. Ranking quality is therefore encoder-invariant on this split: differences between architectures appear only after fixing a decision threshold, not in the order of predicted scores.
+
 ![Test logit histograms](runs/test_logit_histograms.png)
 
-Logit histograms show the distribution of class-1 logits split by ground-truth label. ROC curves report ranking quality independent of the 0.5 probability threshold.
+Histograms plot the class-1 logit on the test split, split by ground-truth label.
+
+**GIN** forms two well-separated modes. True class $0$ concentrates below $-0.5$, with a dominant spike near $-1.75$. True class $1$ concentrates above $0.4$, with a sharp spike near $1.0$ and a secondary mode near $0.5$. Median positive-class probability is $0.815$ for true class $1$ and $0.189$ for true class $0$. At threshold $0.5$, $32.3\%$ of class-$0$ graphs are false positives and $12.6\%$ of class-$1$ graphs are false negatives.
+
+**PNA** compresses the positive mode into a narrow spike near logit $0.3$, while the class-$0$ density spreads across negative logits without a single sharp peak. Median probabilities are $0.805$ for class $1$ and $0.217$ for class $0$. The ranking AUC matches GIN, but the logit scale is less dispersed: PNA acts as a near-saturated scorer on positive threads.
+
+**GAT** shows the widest overlap between classes. True class $0$ retains mass below $-1.0$, yet true class $1$ also places a mode near logit $0$, so the decision boundary is less sharp than in GIN. GAT yields the lowest false-positive rate on class $0$ at $30.0\%$, but the highest false-negative rate on class $1$ at $14.2\%$. This pattern matches the confusion matrices: GAT sacrifices positive recall to recover more negative-class graphs.
+
+Per-architecture figures: `runs/gin_seed42/test_roc_curve.png`, `runs/pna_seed42/test_roc_curve.png`, `runs/gat_seed42/test_roc_curve.png`, and the matching `test_logit_histogram.png` files.
 
 ### Confusion matrices
 
@@ -443,7 +453,7 @@ Test confusion counts:
 | True 0 | 6706 | 3197 |
 | True 1 | 1306 | 9100 |
 
-On this dataset the choice of graph encoder has a small effect once structural features, virtual node, and attention pooling are fixed. GIN wins model selection by validation MCC, yet none of the three encoders separates clearly on ROC-AUC. The remaining differences lie in precision and recall balance: PNA matches GIN on F1, while GAT trades positive recall for cleaner negative-class detection.
+On this dataset the choice of graph encoder has a small effect once structural features, virtual node, and attention pooling are fixed. GIN wins model selection by validation MCC, yet none of the three encoders separates on ROC-AUC. Logit histograms explain the residual gap: GIN and PNA sharpen the score distribution, while GAT keeps more mass near the boundary and shifts the precision-recall trade-off toward class $0$. PNA ranks first on ROC-AUC by a margin of $2 \times 10^{-4}$ but does not win validation MCC because thresholded metrics react to the saturated positive logits.
 
 ## Model weights
 

@@ -50,6 +50,8 @@ Validation MCC rises in the first five epochs and plateaus near 0.55--0.56 for e
 
 ![Combined test ROC curves](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/test_roc_curves.png)
 
+ROC-AUC on the test split: GIN 0.8417, PNA 0.8419, GAT 0.8418. The three curves overlap across the full false-positive range. Each model reaches true positive rate 0.80 near false positive rate 0.25. Encoder choice affects thresholded metrics more than ranking quality.
+
 Per-architecture plots:
 
 - GIN: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gin_seed42/test_roc_curve.png
@@ -60,7 +62,9 @@ Per-architecture plots:
 
 ![Combined logit histograms for class 1](https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/test_logit_histograms.png)
 
-Densities are split by ground-truth label. Separation between the two classes reflects ranking quality beyond the fixed 0.5 probability threshold.
+Histograms show the class-1 logit density split by ground-truth label.
+
+GIN separates the two classes into negative and positive modes, with medians 0.189 for class 0 and 0.815 for class 1. PNA concentrates true class 1 into a narrow spike near logit 0.3 while spreading class 0 across negative values. GAT keeps the largest overlap near logit 0, which lowers the false-positive rate on class 0 to 30.0% but raises the false-negative rate on class 1 to 14.2%.
 
 - GIN: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/gin_seed42/test_logit_histogram.png
 - PNA: https://raw.githubusercontent.com/pymlex/threads-gnn/main/runs/pna_seed42/test_logit_histogram.png
