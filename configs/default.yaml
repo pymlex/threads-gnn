@@ -1,0 +1,59 @@
+seed: 42
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  shard_size: 2000
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+
+features:
+  use_degree: true
+  use_log_degree: true
+  use_normalised_degree: true
+  use_degree_bucket: true
+  degree_bucket_bins: 16
+  use_clustering: true
+  use_kcore: true
+  use_pagerank: true
+  use_laplacian_pe: true
+  laplacian_pe_dim: 8
+  use_rwse: true
+  rwse_steps: 8
+  pagerank_alpha: 0.85
+  pagerank_max_iter: 100
+
+model:
+  architecture: gin
+  hidden_dim: 128
+  num_layers: 4
+  dropout: 0.2
+  num_heads: 4
+  use_virtual_node: true
+  pooling: attention
+  gin_eps: 0.0
+  pna_aggregators:
+    - mean
+    - max
+    - min
+    - std
+  pna_scalers:
+    - identity
+    - amplification
+    - attenuation
+
+training:
+  batch_size: 128
+  num_epochs: 200
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  early_stopping_patience: 20
+  scheduler: cosine
+  use_amp: true
+  num_workers: 2
+
+output:
+  runs_dir: runs
+  checkpoints_dir: checkpoints
