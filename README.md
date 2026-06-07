@@ -280,9 +280,32 @@ Degree scalers $s \in {\text{identity}, \text{amplification}, \text{attenuation}
 flowchart TB
     X["Structural features x"] --> Proj["Input projection"]
     Proj --> PNA["PNAConv"]
-    PNA --> Stats["mean, max, min, std"]
-    Stats --> Sc["identity, amplification, attenuation scalers"]
-    Sc --> Enc["Virtual node, PNA block x3"]
+    subgraph Agg["Neighbourhood statistics"]
+        M["mean"]
+        MX["max"]
+        MN["min"]
+        SD["std"]
+    end
+    Join["Combine"]
+    subgraph Sc["Degree scalers"]
+        Id["identity"]
+        Amp["amplification"]
+        Att["attenuation"]
+    end
+    PNA --> M
+    PNA --> MX
+    PNA --> MN
+    PNA --> SD
+    M --> Join
+    MX --> Join
+    MN --> Join
+    SD --> Join
+    Join --> Id
+    Join --> Amp
+    Join --> Att
+    Id --> Enc["Virtual node, PNA block x3"]
+    Amp --> Enc
+    Att --> Enc
     Enc --> Pool["Attention pooling"]
     Pool --> Out["Classifier MLP, Binary logits"]
 ```
@@ -303,8 +326,20 @@ Layers $1$–$3$ concatenate $K = 4$ heads. The final layer averages head output
 flowchart TB
     X["Structural features x"] --> Proj["Input projection"]
     Proj --> GAT["GATConv"]
-    GAT --> Heads["Head 1, Head 2, Head 3, Head 4"]
-    Heads --> Merge["Concat or mean"]
+    subgraph Heads["Attention heads"]
+        H1["Head 1"]
+        H2["Head 2"]
+        H3["Head 3"]
+        H4["Head 4"]
+    end
+    GAT --> H1
+    GAT --> H2
+    GAT --> H3
+    GAT --> H4
+    H1 --> Merge["Concat or mean"]
+    H2 --> Merge
+    H3 --> Merge
+    H4 --> Merge
     Merge --> Enc["Virtual node, GAT block x3"]
     Enc --> Pool["Attention pooling"]
     Pool --> Out["Classifier MLP, Binary logits"]
