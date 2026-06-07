@@ -267,7 +267,7 @@ All three architectures use the same pooling method from `configs/default.yaml`.
 - full-precision training on GPU
 - gradient clipping with max norm $1.0$
 - early stopping on validation MCC with patience $20$
-- batch size $512$ for Colab T4
+- batch size $4096$ for Colab GPUs with 24 GB VRAM
 
 The test split is never used for model selection. Architectures are ranked by best validation MCC. Test metrics for the selected architecture are reported once after training.
 
@@ -329,10 +329,11 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 | num_layers | 4 |
 | dropout | 0.2 |
 | num_heads | 4 |
-| batch_size | 512 |
-| learning_rate | $10^{-3}$ |
+| batch_size | 4096 |
+| learning_rate | $3 \times 10^{-3}$ |
+| num_epochs | 60 |
 | weight_decay | $10^{-4}$ |
-| early_stopping_patience | 20 |
+| early_stopping_patience | 12 |
 | virtual_node | enabled |
 | pooling | attention |
 
