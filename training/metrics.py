@@ -22,8 +22,8 @@ from torch import Tensor
 
 
 def softmax_probabilities(logits: Tensor) -> np.ndarray:
-    """Convert logits to positive-class probabilities."""
-    probabilities = torch.softmax(logits, dim=-1)[:, 1]
+    """Convert logits to positive-class probabilities in float32."""
+    probabilities = torch.softmax(logits.float(), dim=-1)[:, 1]
     return probabilities.detach().cpu().numpy()
 
 
