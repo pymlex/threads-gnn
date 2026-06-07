@@ -1,8 +1,11 @@
 import argparse
 import json
+import os
 from pathlib import Path
 
 from huggingface_hub import HfApi, create_repo
+
+from utils.env import load_dotenv_file
 
 
 def main() -> None:
@@ -33,6 +36,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    load_dotenv_file()
+    token = os.environ["HF_TOKEN"]
+
     selection_path = Path(args.runs_dir) / "selected_model.json"
     with selection_path.open("r", encoding="utf-8") as handle:
         selection = json.load(handle)
@@ -44,8 +50,8 @@ def main() -> None:
     )
     run_dir = Path(args.runs_dir) / f"{architecture}_seed{args.seed}"
 
-    api = HfApi()
-    create_repo(args.repo_id, exist_ok=True, repo_type="model")
+    api = HfApi(token=token)
+    create_repo(args.repo_id, exist_ok=True, repo_type="model", token=token)
 
     api.upload_file(
         path_or_fileobj=str(checkpoint_path),

@@ -13,3 +13,5 @@ tqdm>=4.66.0
 pyyaml>=6.0
 pydantic>=2.5.0
 huggingface_hub>=0.20.0
+python-dotenv>=1.0.0
+requests>=2.31.0

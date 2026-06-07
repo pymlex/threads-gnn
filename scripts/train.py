@@ -5,8 +5,11 @@ from training.trainer import GraphTrainer
 from utils.config import load_config
 
 
+ARCHITECTURES = ["gin", "pna", "gat"]
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Train a graph classifier")
+    parser = argparse.ArgumentParser(description="Train graph classifiers")
     parser.add_argument(
         "--config",
         type=str,
@@ -16,9 +19,9 @@ def main() -> None:
     parser.add_argument(
         "--architecture",
         type=str,
-        choices=["gin", "pna", "gat"],
-        default=None,
-        help="Override model architecture",
+        choices=["all", "gin", "pna", "gat"],
+        default="all",
+        help="Model architecture or all for GIN, PNA, and GAT",
     )
     parser.add_argument(
         "--pooling",
@@ -28,13 +31,16 @@ def main() -> None:
         help="Override graph pooling method",
     )
     args = parser.parse_args()
-    config = load_config(args.config)
-    if args.architecture is not None:
-        config.model.architecture = args.architecture
-    if args.pooling is not None:
-        config.model.pooling = args.pooling
-    trainer = GraphTrainer(config)
-    trainer.train()
+
+    architectures = ARCHITECTURES if args.architecture == "all" else [args.architecture]
+
+    for architecture in architectures:
+        config = load_config(args.config)
+        config.model.architecture = architecture
+        if args.pooling is not None:
+            config.model.pooling = args.pooling
+        trainer = GraphTrainer(config)
+        trainer.train()
 
 
 if __name__ == "__main__":

@@ -3,9 +3,6 @@ import subprocess
 import sys
 
 
-ARCHITECTURES = ["gin", "pna", "gat"]
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run full experiment pipeline")
     parser.add_argument(
@@ -17,22 +14,27 @@ def main() -> None:
     args = parser.parse_args()
     python = sys.executable
 
-    subprocess.run([python, "scripts/preprocess.py", "--config", args.config], check=True)
-
-    for architecture in ARCHITECTURES:
-        subprocess.run(
-            [
-                python,
-                "scripts/train.py",
-                "--config",
-                args.config,
-                "--architecture",
-                architecture,
-            ],
-            check=True,
-        )
-
+    subprocess.run(
+        [python, "scripts/preprocess.py", "--config", args.config],
+        check=True,
+    )
+    subprocess.run(
+        [
+            python,
+            "scripts/train.py",
+            "--config",
+            args.config,
+            "--architecture",
+            "all",
+        ],
+        check=True,
+    )
     subprocess.run([python, "scripts/compare.py"], check=True)
+    subprocess.run(
+        [python, "scripts/eval.py", "--config", args.config, "--architecture", "all"],
+        check=True,
+    )
+    subprocess.run([python, "scripts/plot_curves.py"], check=True)
 
 
 if __name__ == "__main__":

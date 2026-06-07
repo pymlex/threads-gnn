@@ -11,7 +11,7 @@ def main() -> None:
         help="Pipeline command to execute",
     )
     parser.add_argument("--config", type=str, default="configs/default.yaml")
-    parser.add_argument("--architecture", type=str, default=None)
+    parser.add_argument("--architecture", type=str, default="all")
     parser.add_argument("--checkpoint", type=str, default=None)
     args, remainder = parser.parse_known_args()
     python = sys.executable
@@ -19,11 +19,23 @@ def main() -> None:
     if args.command == "preprocess":
         command = [python, "scripts/preprocess.py", "--config", args.config]
     elif args.command == "train":
-        command = [python, "scripts/train.py", "--config", args.config]
-        if args.architecture is not None:
-            command.extend(["--architecture", args.architecture])
+        command = [
+            python,
+            "scripts/train.py",
+            "--config",
+            args.config,
+            "--architecture",
+            args.architecture,
+        ]
     elif args.command == "eval":
-        command = [python, "scripts/eval.py", "--config", args.config]
+        command = [
+            python,
+            "scripts/eval.py",
+            "--config",
+            args.config,
+            "--architecture",
+            args.architecture,
+        ]
         if args.checkpoint is not None:
             command.extend(["--checkpoint", args.checkpoint])
     elif args.command == "compare":

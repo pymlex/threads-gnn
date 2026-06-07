@@ -46,7 +46,19 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 
 Full training and evaluation commands are in the [GitHub repository](https://github.com/pymlex/threads-gnn).
 
-## Citation
+## Results
+
+Filled after the Colab experiment run.
+
+| Architecture | Best val MCC | Test MCC | Test F1 | Test ROC-AUC |
+|---|---:|---:|---:|---:|
+| GIN | — | — | — | — |
+| PNA | — | — | — | — |
+| GAT | — | — | — | — |
+
+Selected model: —
+
+## References
 
 ```bibtex
 @misc{threads_gnn,
@@ -58,6 +70,8 @@ Full training and evaluation commands are in the [GitHub repository](https://git
 }
 ```
 
+The project is under GPL-3.0 license.
+
 ```bibtex
 @inproceedings{karateclub,
   title = {{Karate Club: An API Oriented Open-source Python Framework for Unsupervised Learning on Graphs}},
@@ -67,6 +81,22 @@ Full training and evaluation commands are in the [GitHub repository](https://git
   booktitle = {Proceedings of the 29th ACM International Conference on Information and Knowledge Management (CIKM '20)},
   organization = {ACM},
 }
+@inproceedings{xu2019gin,
+  title = {How Powerful are Graph Neural Networks?},
+  author = {Keyulu Xu and Weihua Hu and Jure Leskovec and Stefanie Jegelka},
+  booktitle = {International Conference on Learning Representations},
+  year = {2019},
+}
+@inproceedings{corso2020pna,
+  title = {Principal Neighbourhood Aggregation for Graph Nets},
+  author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li{\`o} and Petar Veli{\v{c}}kovi{\'c}},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year = {2020},
+}
+@inproceedings{velickovic2018gat,
+  title = {Graph Attention Networks},
+  author = {Petar Veli{\v{c}}kovi{\'c} and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li{\`o} and Yoshua Bengio},
+  booktitle = {International Conference on Learning Representations},
+  year = {2018},
+}
 ```
-
-The project is under GPL-3.0 license.

@@ -23,130 +23,155 @@ Raw files:
 - `reddit_target.csv` with columns `id`, `target`
 - `reddit_edges.json` mapping graph id to edge lists
 
-### Dataset citation
-
-B. Rozemberczki, O. Kiss, R. Sarkar: An API Oriented Open-source Python Framework for Unsupervised Learning on Graphs 2019.
-
-```bibtex
-@inproceedings{karateclub,
-  title = {{Karate Club: An API Oriented Open-source Python Framework for Unsupervised Learning on Graphs}},
-  author = {Benedek Rozemberczki and Oliver Kiss and Rik Sarkar},
-  year = {2020},
-  pages = {3125--3132},
-  booktitle = {Proceedings of the 29th ACM International Conference on Information and Knowledge Management (CIKM '20)},
-  organization = {ACM},
-}
-```
-
 ## Repository structure
 
 ```
 threads-gnn/
 ├── configs/default.yaml
+├── .env.example
+├── scripts/install.sh
 ├── data/
-│   ├── download.py
-│   ├── preprocess.py
-│   ├── dataset.py
-│   └── splits.py
-├── features/engineering.py
+├── features/
 ├── models/
-│   ├── base.py
-│   ├── gin.py
-│   ├── pna.py
-│   ├── gat.py
-│   ├── pooling.py
-│   └── virtual_node.py
 ├── training/
-│   ├── trainer.py
-│   └── metrics.py
 ├── scripts/
-│   ├── preprocess.py
-│   ├── train.py
-│   ├── eval.py
-│   ├── compare.py
-│   ├── compare_pooling.py
-│   ├── ablation.py
-│   ├── plot_curves.py
-│   ├── push_hf.py
-│   └── run_all.py
 ├── schemas.py
-├── main.py
-└── requirements.txt
+└── main.py
 ```
 
-## Google Colab setup
+## Google Colab
 
-```bash
-!git clone https://github.com/pymlex/threads-gnn.git
-%cd threads-gnn
-```
+Open a terminal in Colab and run the commands below. Do not use notebook cells.
 
-```bash
-!pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-!pip install -q torch-geometric torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.5.0+cu124.html
-!pip install -q -r requirements.txt
-!pip install -q -e .
-```
-
-```bash
-!python scripts/preprocess.py --config configs/default.yaml
-```
-
-```bash
-!python scripts/compare_pooling.py --config configs/default.yaml --architecture gin
-```
-
-Update `configs/default.yaml` with the pooling method selected by validation MCC, then train all three architectures:
-
-```bash
-!python scripts/train.py --config configs/default.yaml --architecture gin
-!python scripts/train.py --config configs/default.yaml --architecture pna
-!python scripts/train.py --config configs/default.yaml --architecture gat
-```
-
-```bash
-!python scripts/compare.py
-!python scripts/plot_curves.py
-```
-
-Evaluate the selected checkpoint on the test split:
-
-```bash
-!python scripts/eval.py --config configs/default.yaml --checkpoint checkpoints/<architecture>_seed42_best.pt --split test
-```
-
-Upload the selected model to Hugging Face:
-
-```bash
-!export HF_TOKEN=<your_token>
-!python scripts/push_hf.py --repo-id pymlex/threads-gnn
-```
-
-Run the full pipeline in one command:
-
-```bash
-!python scripts/run_all.py --config configs/default.yaml
-```
-
-Feature ablation:
-
-```bash
-!python scripts/ablation.py --config configs/default.yaml --architecture gin
-```
-
-## Local setup
+### Clone
 
 ```bash
 git clone https://github.com/pymlex/threads-gnn.git
 cd threads-gnn
-python -m venv .venv
-source .venv/bin/activate
-pip install torch torchvision torchaudio
-pip install torch-geometric torch-scatter torch-sparse
-pip install -r requirements.txt
-pip install -e .
+```
+
+### Install
+
+Creates `.env` from `.env.example`, installs PyTorch, PyG, and project dependencies, then opens GitHub browser authentication.
+
+```bash
+bash scripts/install.sh
+```
+
+Edit `.env` and set `HF_TOKEN`. Optional fields: `GITHUB_NAME`, `GITHUB_EMAIL`.
+
+### Preprocess
+
+Downloads SNAP data and builds sharded processed graphs with structural features.
+
+```bash
+python scripts/preprocess.py --config configs/default.yaml
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+
+### Train
+
+Trains GIN, PNA, and GAT by default with identical splits and hyperparameters.
+
+```bash
+python scripts/train.py --config configs/default.yaml
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+| `--architecture` | `all` | `all`, `gin`, `pna`, or `gat` |
+| `--pooling` | from config | `mean`, `sum`, or `attention` |
+
+### Compare architectures
+
+Ranks models by validation MCC and writes `runs/selected_model.json`.
+
+```bash
+python scripts/compare.py
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--runs-dir` | `runs` | Directory with run outputs |
+| `--seed` | `42` | Random seed in run folder names |
+
+### Evaluate
+
+Evaluates all best checkpoints on the test split by default.
+
+```bash
+python scripts/eval.py --config configs/default.yaml
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+| `--architecture` | `all` | `all`, `gin`, `pna`, or `gat` |
+| `--checkpoint` | auto | Path for a single-architecture run |
+| `--split` | `test` | `train`, `val`, or `test` |
+| `--seed` | `42` | Seed used in checkpoint filenames |
+
+### Plot training curves
+
+```bash
+python scripts/plot_curves.py
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--runs-dir` | `runs` | Directory with epoch metrics |
+| `--seed` | `42` | Random seed in run folder names |
+
+### Full pipeline
+
+```bash
 python scripts/run_all.py --config configs/default.yaml
 ```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+
+### Push to Hugging Face
+
+Reads `HF_TOKEN` from `.env`.
+
+```bash
+python scripts/push_hf.py --repo-id pymlex/threads-gnn
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--repo-id` | `pymlex/threads-gnn` | Hugging Face model repository |
+| `--runs-dir` | `runs` | Directory with experiment outputs |
+| `--checkpoints-dir` | `checkpoints` | Checkpoint directory |
+| `--seed` | `42` | Random seed in checkpoint filenames |
+
+### Feature ablation
+
+```bash
+python scripts/ablation.py --config configs/default.yaml --architecture gin
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+| `--architecture` | `gin` | Architecture used for ablation |
+
+### Compare pooling
+
+```bash
+python scripts/compare_pooling.py --config configs/default.yaml --architecture gin
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `--config` | `configs/default.yaml` | Experiment configuration path |
+| `--architecture` | `gin` | Architecture used for pooling comparison |
 
 ## Structural node features
 
@@ -182,7 +207,7 @@ The core number $\kappa_i$ from the $k$-core decomposition, normalised by $\max_
 
 **PageRank**
 
-$$\mathbf{pr} = \alpha \, \mathbf{P}^{\top} \mathbf{pr} + (1 - \alpha)\,\frac{\mathbf{1}}{n}$$
+$$\mathbf{pr} = \alpha \mathbf{P}^{\top} \mathbf{pr} + (1 - \alpha)\frac{\mathbf{1}}{n}$$
 
 with $\alpha = 0.85$.
 
@@ -198,7 +223,7 @@ With the default configuration, the input dimension is $38$.
 
 ### Feature ablation table
 
-Run `scripts/ablation.py` to regenerate this table from validation MCC. The table below is produced by `runs/feature_ablation/feature_ablation.csv`.
+Run `scripts/ablation.py` to regenerate this table from validation MCC.
 
 | Variant | Feature dim | Val MCC | Test MCC |
 |---|---:|---:|---:|
@@ -222,35 +247,33 @@ All models share the same backbone:
 
 Optional virtual node updates are applied after every encoder layer. For batch $B$ with graph indices $b(i)$:
 
-$$\mathbf{v}_g \leftarrow \mathrm{MLP}\!\left(\mathbf{v}_g + \sum_{i:\, b(i)=g} \mathbf{h}_i\right), \qquad \mathbf{h}_i \leftarrow \mathbf{h}_i + \mathbf{v}_{b(i)}$$
+$$\mathbf{v}_g \leftarrow \mathrm{MLP}\left(\mathbf{v}_g + \sum_{i:\, b(i)=g} \mathbf{h}_i\right), \qquad \mathbf{h}_i \leftarrow \mathbf{h}_i + \mathbf{v}_{b(i)}$$
 
 ### GIN
 
 Graph Isomorphism Network convolution with MLP $\phi$ and neighbourhood aggregation $\mathcal{N}(i)$:
 
-$$\mathbf{h}_i^{(\ell+1)} = \mathrm{ReLU}\!\left(\mathrm{BN}\!\left((1+\varepsilon)\,\mathbf{h}_i^{(\ell)} + \sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell)}\right)\right)$$
+$$\mathbf{h}_i^{(\ell+1)} = \mathrm{ReLU}\left(\mathrm{BN}\left((1+\varepsilon)\mathbf{h}_i^{(\ell)} + \sum_{j \in \mathcal{N}(i)} \mathbf{h}_j^{(\ell)}\right)\right)$$
 
 with residual connection $\mathbf{h}_i^{(\ell+1)} \leftarrow \mathbf{h}_i^{(\ell)} + \mathbf{h}_i^{(\ell+1)}$.
 
 ### PNA
 
-Principal Neighbourhood Aggregation combines aggregators $\bigoplus \in \{\mu, \max, \min, \sigma\}$ and degree scalers $S(\mathbf{D}, \alpha)$:
+Principal Neighbourhood Aggregation combines aggregators $\mu$, $\max$, $\min$, $\sigma$ with degree scalers $S(\mathbf{D}, \alpha)$:
 
-$$\mathbf{h}_i^{(\ell+1)} = \gamma_{\Theta}\!\left(\mathbf{h}_i^{(\ell)}, \bigoplus_{j \in \mathcal{N}(i)} h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})\right)$$
+$$\mathbf{h}_i^{(\ell+1)} = \gamma_{\Theta}\left(\mathbf{h}_i^{(\ell)}, \bigoplus_{j \in \mathcal{N}(i)} h_{\Theta}(\mathbf{h}_i^{(\ell)}, \mathbf{h}_j^{(\ell)})\right)$$
 
-$$\bigoplus = \begin{bmatrix} 1 \\ S(\mathbf{D}, \alpha{=}1) \\ S(\mathbf{D}, \alpha{=}{-}1) \end{bmatrix} \otimes \begin{bmatrix} \mu \\ \max \\ \min \\ \sigma \end{bmatrix}$$
-
-The in-degree histogram is computed on the training split only.
+The operator $\bigoplus$ applies identity, amplification, and attenuation scalers to mean, max, min, and standard deviation aggregators. The in-degree histogram is computed on the training split only.
 
 ### GAT
 
 Multi-head graph attention with leaky ReLU scoring:
 
-$$e_{ij} = \mathrm{LeakyReLU}\!\left(\mathbf{a}^{\top} [\mathbf{W}\mathbf{h}_i \,\|\, \mathbf{W}\mathbf{h}_j]\right)$$
+$$e_{ij} = \mathrm{LeakyReLU}\left(\mathbf{a}^{\top} [\mathbf{W}\mathbf{h}_i \| \mathbf{W}\mathbf{h}_j]\right)$$
 
 $$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}$$
 
-$$\mathbf{h}_i' = \sigma\!\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij}\, \mathbf{W}\mathbf{h}_j\right)$$
+$$\mathbf{h}_i' = \sigma\left(\sum_{j \in \mathcal{N}(i)} \alpha_{ij} \mathbf{W}\mathbf{h}_j\right)$$
 
 Intermediate layers concatenate heads. The final layer averages head outputs to keep the hidden dimension fixed.
 
@@ -285,6 +308,8 @@ $$s_i = \mathbf{w}^{\top}\tanh(\mathbf{W}\mathbf{h}_i), \qquad \alpha_i = \frac{
 
 The test split is never used for model selection. Architectures are ranked by best validation MCC. Test metrics for the selected architecture are reported once after training.
 
+Per-epoch metrics are logged with `tqdm` and saved to `runs/<architecture>_seed42/epoch_metrics.csv`. Final metrics are saved to `runs/<architecture>_seed42/final_metrics.json`.
+
 ### Primary metrics
 
 Matthews correlation coefficient:
@@ -293,11 +318,11 @@ $$\mathrm{MCC} = \frac{TP \cdot TN - FP \cdot FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN
 
 Additional metrics: accuracy, balanced accuracy, precision, recall, F1, ROC-AUC, PR-AUC, confusion matrix, classification report.
 
-Per-epoch metrics are saved to `runs/<architecture>_seed42/epoch_metrics.csv`. Final metrics are saved to `runs/<architecture>_seed42/final_metrics.json`.
+## Results
 
-## Architecture comparison
+Values below are filled after the Colab run.
 
-After training all three models, `scripts/compare.py` writes `runs/architecture_comparison.csv` and `runs/selected_model.json`.
+### Architecture comparison
 
 | Architecture | Best val MCC | Val F1 | Val ROC-AUC | Test MCC | Test F1 | Test ROC-AUC |
 |---|---:|---:|---:|---:|---:|---:|
@@ -305,7 +330,21 @@ After training all three models, `scripts/compare.py` writes `runs/architecture_
 | PNA | — | — | — | — | — | — |
 | GAT | — | — | — | — | — | — |
 
-Training curves are saved to `runs/training_curves.png`. Confusion matrices and test predictions are stored under each run directory.
+### Training curves
+
+![Training curves](runs/training_curves.png)
+
+### Confusion matrices
+
+GIN test confusion matrix: `runs/gin_seed42/test_confusion_matrix.png`
+
+PNA test confusion matrix: `runs/pna_seed42/test_confusion_matrix.png`
+
+GAT test confusion matrix: `runs/gat_seed42/test_confusion_matrix.png`
+
+### Selected model test metrics
+
+Filled from `runs/selected_model.json` and the corresponding `final_metrics.json` after model selection.
 
 ## Model weights
 
@@ -346,6 +385,8 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 }
 ```
 
+The project is under GPL-3.0 license.
+
 ```bibtex
 @inproceedings{karateclub,
   title = {{Karate Club: An API Oriented Open-source Python Framework for Unsupervised Learning on Graphs}},
@@ -355,27 +396,18 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
   booktitle = {Proceedings of the 29th ACM International Conference on Information and Knowledge Management (CIKM '20)},
   organization = {ACM},
 }
-```
-
-```bibtex
 @inproceedings{xu2019gin,
   title = {How Powerful are Graph Neural Networks?},
   author = {Keyulu Xu and Weihua Hu and Jure Leskovec and Stefanie Jegelka},
   booktitle = {International Conference on Learning Representations},
   year = {2019},
 }
-```
-
-```bibtex
 @inproceedings{corso2020pna,
   title = {Principal Neighbourhood Aggregation for Graph Nets},
   author = {Gabriele Corso and Luca Cavalleri and Dominique Beaini and Pietro Li{\`o} and Petar Veli{\v{c}}kovi{\'c}},
   booktitle = {Advances in Neural Information Processing Systems},
   year = {2020},
 }
-```
-
-```bibtex
 @inproceedings{velickovic2018gat,
   title = {Graph Attention Networks},
   author = {Petar Veli{\v{c}}kovi{\'c} and Guillem Cucurull and Arantxa Casanova and Adriana Romero and Pietro Li{\`o} and Yoshua Bengio},
@@ -383,5 +415,3 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
   year = {2018},
 }
 ```
-
-The project is under GPL-3.0 license.

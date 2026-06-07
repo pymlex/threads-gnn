@@ -101,7 +101,7 @@ class GraphTrainer:
         ):
             return self.model(batch)
 
-    def _evaluate_loader(self, loader: DataLoader) -> dict[str, object]:
+    def _evaluate_loader(self, loader: DataLoader, desc: str) -> dict[str, object]:
         """Evaluate model on a dataloader."""
         self.model.eval()
         labels_all = []
@@ -110,7 +110,7 @@ class GraphTrainer:
         graph_ids_all = []
 
         with torch.no_grad():
-            for batch in loader:
+            for batch in tqdm(loader, desc=desc, leave=False):
                 logits = self._forward_batch(batch)
                 probabilities = softmax_probabilities(logits)
                 predictions = logits.argmax(dim=-1).cpu().numpy()
@@ -209,8 +209,8 @@ class GraphTrainer:
         """Run full training with early stopping on validation MCC."""
         for epoch in range(1, self.config.training.num_epochs + 1):
             train_metrics = self._train_epoch()
-            val_result = self._evaluate_loader(self.val_loader)
-            test_result = self._evaluate_loader(self.test_loader)
+            val_result = self._evaluate_loader(self.val_loader, "Validation")
+            test_result = self._evaluate_loader(self.test_loader, "Test")
             val_metrics = val_result["metrics"]
             test_metrics = test_result["metrics"]
 
@@ -263,8 +263,8 @@ class GraphTrainer:
         checkpoint = torch.load(best_checkpoint, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint["model_state_dict"])
 
-        val_result = self._evaluate_loader(self.val_loader)
-        test_result = self._evaluate_loader(self.test_loader)
+        val_result = self._evaluate_loader(self.val_loader, "Validation")
+        test_result = self._evaluate_loader(self.test_loader, "Test")
 
         confusion_info = save_confusion_matrix(
             test_result["labels"],
