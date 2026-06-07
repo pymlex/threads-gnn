@@ -184,6 +184,7 @@ def compute_node_features(
     )
     if needs_nx:
         graph = to_networkx(data, to_undirected=True)
+        graph.remove_edges_from(nx.selfloop_edges(graph))
         feature_blocks.extend(
             _graph_topology_features(graph, num_nodes, config)
         )

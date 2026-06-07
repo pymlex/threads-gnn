@@ -41,6 +41,7 @@ class DataConfig(BaseModel):
     raw_dir: str = "data/raw"
     processed_dir: str = "data/processed"
     shard_size: int = 2000
+    preprocess_workers: int = 8
     train_ratio: float = 0.8
     val_ratio: float = 0.1
     test_ratio: float = 0.1

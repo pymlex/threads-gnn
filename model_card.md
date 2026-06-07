@@ -14,7 +14,7 @@ metrics:
   - f1
   - roc-auc
 library_name: pytorch
-pipeline_tag: graph-classification
+pipeline_tag: graph-ml
 ---
 
 # pymlex/threads-gnn
